@@ -2,6 +2,12 @@
 
 A little CLI utility to chunk, embed, and query text files.
 
+# Installation
+
+```sh
+cargo install --git https://github.com/igordejanovic/emqu
+```
+
 # Usage
 
 ## Semantic chunking

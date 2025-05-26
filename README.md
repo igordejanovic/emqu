@@ -1,34 +1,32 @@
-# emqu
+# `emqu`
 
-A little CLI utility to chunk/embed/query text files.
+A little CLI utility to chunk, embed, and query text files.
 
 # Usage
 
 ## Semantic chunking
 
-``` emacs-lisp
-emqu chunk 'context/*.adoc' context-chunked
+```emacs-lisp
+emqu chunk 'lionweb-spec/*.adoc' context-chunked
 ```
 
 ## Generate embeddings
 
 ```sh
-emqu embed 'issues/*.txt' lionweb_emqu_issues.json
+emqu embed 'context-chunked/*.adoc' lionweb_emqu_spec.json
 ```
 
 ## Query
 
 ```sh
-emqu query -t 5 lionweb_emqu_issues.json "What is the difference between key and name?"
+emqu query -t 5 lionweb_emqu_spec.json "What is the difference between key and name?"
 ```
 
 # Motivation
 
 A simple RAG for [gptel](https://github.com/karthink/gptel).
 
-For example, to bring issues from the [LionWeb spec
-project](https://github.com/LionWeb-io/specification/) into limited context of
-LLMs:
+For example, to bring issues from the [LionWeb spec project](https://github.com/LionWeb-io/specification/) into the limited context of LLMs:
 
 1. Fetch GitHub issues:
 
@@ -51,9 +49,14 @@ LLMs:
     ----
     {{end}}'"'"' > issues/{}.txt'
     ```
-2. Create embeddings as shown above.
 
-3. Make a gptel tool which will be called to bring relevant issues into context.
+2. Create embeddings:
+
+    ```sh
+    emqu embed 'issues/*.txt' lionweb_emqu_issues.json
+    ```
+
+3. Make a `gptel` tool to bring relevant issues into context:
 
     ```emacs-lisp
     (gptel-make-tool
@@ -68,4 +71,3 @@ LLMs:
                 :description "Search query for the issues database"))
     :category "external")
     ```
-

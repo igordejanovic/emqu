@@ -1,8 +1,14 @@
 # emqu
 
-A little CLI utility to embed/query text files.
+A little CLI utility to chunk/embed/query text files.
 
 # Usage
+
+## Semantic chunking
+
+``` emacs-lisp
+emqu chunk 'context/*.adoc' context-chunked
+```
 
 ## Generate embeddings
 
@@ -21,7 +27,8 @@ emqu query -t 5 lionweb_emqu_issues.json "What is the difference between key and
 A simple RAG for [gptel](https://github.com/karthink/gptel).
 
 For example, to bring issues from the [LionWeb spec
-project](https://github.com/LionWeb-io/specification/) into limited context:
+project](https://github.com/LionWeb-io/specification/) into limited context of
+LLMs:
 
 1. Fetch GitHub issues:
 

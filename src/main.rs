@@ -1,8 +1,11 @@
 use clap::{Parser, Subcommand};
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 use glob::glob;
+use indicatif::{ProgressBar, ProgressFinish, ProgressStyle};
 use serde_json::{from_reader, to_writer};
 use std::{ffi::OsStr, fs, path::PathBuf};
+use text_splitter::{ChunkConfig, TextSplitter};
+use tokenizers::Tokenizer;
 
 #[derive(Parser)]
 #[command(version, about)]
@@ -11,8 +14,16 @@ struct Args {
     command: Command,
 }
 
+/// Chunk, embed and query textual files.
 #[derive(Subcommand)]
 enum Command {
+    /// Chunk files into semantically sensible pieces
+    Chunk {
+        /// Glob pattern for files to process
+        pattern: String,
+        /// Output folder for chunks
+        output: PathBuf,
+    },
     /// Generate embeddings from files
     Embed {
         /// Glob pattern for files to process
@@ -51,7 +62,63 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             ),
     )?;
 
+    fn get_progress(len: u64, message: &'static str) -> ProgressBar {
+        ProgressBar::new(len)
+            .with_finish(ProgressFinish::AndLeave)
+            .with_style(
+                ProgressStyle::with_template(
+                    "{msg}: {wide_bar} [{human_pos} / {human_len} | {percent}%]",
+                )
+                .unwrap(),
+            )
+            .with_message(message)
+    }
+
     match args.command {
+        Command::Chunk { pattern, output } => {
+            fs::create_dir_all(&output)?;
+            let files_to_chunk: Vec<Result<PathBuf, glob::GlobError>> = glob(&pattern)?.collect();
+            println!("Chunking {} document(s).", files_to_chunk.len());
+
+            let tokenizer = Tokenizer::from_pretrained("bert-base-cased", None).unwrap();
+            let max_tokens = 1000;
+            let splitter = TextSplitter::new(ChunkConfig::new(max_tokens).with_sizer(tokenizer));
+
+            let progress = get_progress(files_to_chunk.len() as u64, "Chunking");
+
+            for entry in files_to_chunk {
+                let path = entry?;
+                let content = fs::read_to_string(&path)?;
+                let base_name = path
+                    .file_stem()
+                    .unwrap_or(OsStr::new("unknown"))
+                    .to_string_lossy();
+                let extension = path
+                    .extension()
+                    .unwrap_or(OsStr::new("txt"))
+                    .to_string_lossy();
+
+                let chunks = splitter.chunks(&content).collect::<Vec<_>>();
+                let line_counts: Vec<(usize, usize)> = chunks
+                    .iter()
+                    .scan(0, |acc, chunk| {
+                        let lines = chunk.lines().count();
+                        let start = *acc + 1;
+                        *acc += lines;
+                        Some((start, *acc))
+                    })
+                    .collect();
+
+                for (i, (chunk, (start, end))) in chunks.iter().zip(line_counts).enumerate() {
+                    let header = format!("From {}, lines {} - {}\n\n", base_name, start, end);
+                    let chunk_file = output.join(format!("{}-{}.{}", base_name, i + 1, extension));
+                    fs::write(chunk_file, header + chunk)?;
+                }
+                progress.inc(1u64);
+            }
+
+            println!("Successfully chunked documents into {}", output.display());
+        }
         Command::Embed { pattern, output } => {
             let mut documents = Vec::new();
 

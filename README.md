@@ -2,6 +2,17 @@
 
 A little CLI utility to chunk, embed, and query text files.
 
+With this tool you can take a bunch of text sources (from PDFs, web, GitHub
+issues, etc.), chunk it into semantically relevant parts, embed it into semantic
+vector space, and then query it using natural language questions. Or, to put it
+simply, this tool enables you to "talk to your documentation".
+
+This enables building a simple [RAG
+system](https://en.wikipedia.org/wiki/Retrieval-augmented_generation) which
+solves problems of today's LLMs with limited context, where with each question a
+relevant part of the documentation is found and fed into the context.
+
+
 # Installation
 
 ```sh
@@ -30,7 +41,7 @@ emqu query -t 5 lionweb_emqu_spec.json "What is the difference between key and n
 
 # Motivation
 
-A simple RAG for [gptel](https://github.com/karthink/gptel).
+A simple RAG for [gptel](https://github.com/karthink/gptel) - a simple LLM client for Emacs.
 
 For example, to bring issues from the [LionWeb spec project](https://github.com/LionWeb-io/specification/) into the limited context of LLMs:
 
@@ -62,7 +73,7 @@ For example, to bring issues from the [LionWeb spec project](https://github.com/
     emqu embed 'issues/*.txt' lionweb_emqu_issues.json
     ```
 
-3. Make a `gptel` tool to bring relevant issues into context:
+3. In Emacs, make a `gptel` tool to bring relevant issues into context:
 
     ```emacs-lisp
     (gptel-make-tool
@@ -77,3 +88,8 @@ For example, to bring issues from the [LionWeb spec project](https://github.com/
                 :description "Search query for the issues database"))
     :category "external")
     ```
+
+Now you can ask questions about LionWeb in an Emacs Orgmode buffer keeping the
+whole history of conversation as an Orgmode file with all the benefits of
+Orgmode. Thanks to gptel, the conversation can be continued at any later time by
+opening Org file.

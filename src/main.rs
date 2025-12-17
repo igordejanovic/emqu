@@ -53,7 +53,7 @@ fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
     let model = TextEmbedding::try_new(
-        InitOptions::new(EmbeddingModel::AllMiniLML6V2)
+        InitOptions::new(EmbeddingModel::MultilingualE5Small)
             .with_show_download_progress(true)
             .with_cache_dir(
                 dirs::cache_dir()
@@ -132,7 +132,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 documents.push(format!("From: {base_name:?}\n{content}"));
             }
 
-            let embeddings = model.embed(documents.clone(), None)?;
+            let embeddings = model.embed(documents.clone(), Some(16))?;
             let output_data: Vec<(String, Vec<f32>)> =
                 documents.into_iter().zip(embeddings).collect();
 
